@@ -1,9 +1,10 @@
 import { AnimatePresence, MotionConfig, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BottomNav, { TABS, type Tab } from "./components/BottomNav";
 import FxLayer from "./components/FxLayer";
+import Dog3D from "./components/Dog3D";
 import { Paw } from "./components/Icons";
-import Mascot from "./components/Mascot";
+import TopBar from "./components/TopBar";
 import { boot } from "./lib/boot";
 import { daysBetween, today } from "./lib/dates";
 import { IS_ARTIFACT } from "./lib/persist";
@@ -19,6 +20,7 @@ import Onboarding from "./screens/Onboarding";
 import Tricks from "./screens/Tricks";
 
 const VALID = new Set<string>(TABS.map((t) => t.id));
+const TITLES: Record<Tab, string | undefined> = { home: undefined, journal: "יומן", growth: "גדילה", health: "בריאות", tricks: "טריקים" };
 const readHash = (): Tab => {
   const h = location.hash.slice(1);
   return (VALID.has(h) ? h : "home") as Tab;
@@ -30,7 +32,6 @@ function Splash() {
       <div className="splash-logo">
         <Paw size={28} /> Peti
       </div>
-      <Mascot coat="golden" pattern="patch" mood="happy" size={150} />
       <div className="splash-dots" aria-hidden="true">
         <span />
         <span />
@@ -43,7 +44,9 @@ function Splash() {
 function LoadError() {
   return (
     <div className="splash">
-      <Mascot coat="golden" pattern="patch" mood="bored" size={150} />
+      <div className="ob-dog small">
+        <Dog3D coat="golden" pattern="plain" mood="bored" framing="full" />
+      </div>
       <h1 className="ob-title">לא הצלחנו להגיע לנתונים השמורים</h1>
       <p className="ob-sub">כנראה בעיית חיבור. הנתונים שלכם לא נמחקו.</p>
       <div className="ob-actions">
@@ -67,6 +70,7 @@ export default function App() {
   const dog = useActiveDog();
   const { sheet, openSheet, onboarding, endOnboarding } = useUI();
   const [tab, setTab] = useState<Tab>(readHash);
+  const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const onHash = () => setTab(readHash());
@@ -83,13 +87,16 @@ export default function App() {
 
   const go = (t: Tab) => {
     if (t === tab) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      mainRef.current?.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
     location.hash = t;
     setTab(t);
-    window.scrollTo(0, 0);
   };
+
+  useEffect(() => {
+    mainRef.current?.scrollTo(0, 0);
+  }, [tab]);
 
   const t = today();
   const lateHealth = dog ? health.filter((h) => h.dogId === dog.id && h.due && daysBetween(t, h.due) < 0).length : 0;
@@ -113,18 +120,20 @@ export default function App() {
       tab === "journal" ? <Journal /> : tab === "growth" ? <Growth /> : tab === "health" ? <Health /> : tab === "tricks" ? <Tricks /> : <Home go={go} />;
     body = (
       <>
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.main
-            key={tab + (dog?.id ?? "")}
-            className="main"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-          >
-            {screen}
-          </motion.main>
-        </AnimatePresence>
+        <TopBar title={TITLES[tab]} />
+        <main className="main" ref={mainRef}>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={tab + (dog?.id ?? "")}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+            >
+              {screen}
+            </motion.div>
+          </AnimatePresence>
+        </main>
         <BottomNav tab={tab} onChange={go} alerts={{ health: lateHealth }} />
         <DogSheet open={sheet === "dog"} onClose={() => openSheet(null)} />
         <BadgesSheet open={sheet === "badges"} onClose={() => openSheet(null)} />

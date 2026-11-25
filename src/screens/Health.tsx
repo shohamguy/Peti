@@ -2,7 +2,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { Icon } from "../components/Icons";
 import Sheet from "../components/Sheet";
-import TopBar from "../components/TopBar";
 import { ConfirmButton, Empty, SectionHead } from "../components/ui";
 import { addDays, daysBetween, fmtDay, nDays, relDay, today } from "../lib/dates";
 import { HEALTH_KINDS, HEALTH_KIND_IDS, HEALTH_TEMPLATES, REPEAT_OPTIONS, repeatLabel } from "../lib/data";
@@ -59,8 +58,7 @@ export default function Health() {
   };
 
   return (
-    <div className="screen health">
-      <TopBar title="בריאות" />
+    <div className="page health">
 
       <motion.section className={late ? "status-card bad" : soon ? "status-card warn" : "status-card good"} initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
         <span className="status-icon" aria-hidden="true">

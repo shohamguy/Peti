@@ -3,7 +3,7 @@ import { Icon } from "../components/Icons";
 import { InstallCard } from "../components/Install";
 import Mascot from "../components/Mascot";
 import Sheet from "../components/Sheet";
-import { ConfirmButton, DogAvatar, Segmented } from "../components/ui";
+import { ConfirmButton, DogAvatar, Segmented, useDogImage } from "../components/ui";
 import { today } from "../lib/dates";
 import { BREEDS, COATS, COAT_IDS, LOG_TYPES, PATTERNS, QUICK_TYPES, SIZES, SIZE_IDS, gFor } from "../lib/data";
 import { fx } from "../lib/fx";
@@ -41,6 +41,7 @@ export default function DogSheet({ open, onClose }: { open: boolean; onClose: ()
   const [taskEmoji, setTaskEmoji] = useState(TASK_EMOJIS[0]);
   const [taskType, setTaskType] = useState<LogType | "">("");
   const avatarRef = useRef<HTMLInputElement>(null);
+  const preview = useDogImage(form?.coat ?? "golden", form?.pattern ?? "plain", "full", 360);
 
   useEffect(() => {
     if (open && dog) setForm(toForm(dog));
@@ -143,6 +144,8 @@ export default function DogSheet({ open, onClose }: { open: boolean; onClose: ()
           <div className="profile-preview">
             {form.avatar ? (
               <img className="avatar-big" src={form.avatar} alt={`התמונה של ${form.name}`} />
+            ) : preview ? (
+              <img className="dog-preview" src={preview} alt={`${form.name} בציור`} />
             ) : (
               <Mascot coat={form.coat} pattern={form.pattern} mood="happy" size={120} />
             )}

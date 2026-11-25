@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import Mascot from "../components/Mascot";
+import Dog3D from "../components/Dog3D";
 import { Paw } from "../components/Icons";
 import { Segmented } from "../components/ui";
 import { addDays, today } from "../lib/dates";
@@ -53,10 +53,14 @@ export default function Onboarding({ mode, onDone }: { mode: "first" | "add"; on
   };
 
   useEffect(() => {
-    if (step === 4) fx.emit({ type: "confetti", big: true });
+    if (step === 4) {
+      fx.emit({ type: "confetti", big: true });
+      setTimeout(() => fx.emit({ type: "cheer" }), 250);
+    }
   }, [step]);
 
   const nameOk = name.trim().length > 0;
+  const dogMood = step === 4 ? "ecstatic" : step === 3 ? "calm" : step === 1 && !nameOk ? "calm" : "happy";
 
   return (
     <div className="onboarding">
@@ -78,6 +82,17 @@ export default function Onboarding({ mode, onDone }: { mode: "first" | "add"; on
         </div>
       )}
 
+      {step === 0 && (
+        <motion.div className="ob-logo-row" initial={{ scale: 0.6, rotate: -8 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 260, damping: 12 }}>
+          <span className="ob-logo">
+            <Paw size={26} /> Peti
+          </span>
+        </motion.div>
+      )}
+      <div className={step === 3 ? "ob-dog small" : "ob-dog"}>
+        <Dog3D coat={coat} pattern={pattern} mood={dogMood} framing="full" interactive label="ליטוף" />
+      </div>
+
       <AnimatePresence mode="wait" custom={dir} initial={false}>
         <motion.section
           key={step}
@@ -90,12 +105,6 @@ export default function Onboarding({ mode, onDone }: { mode: "first" | "add"; on
         >
           {step === 0 && (
             <>
-              <div className="ob-hero">
-                <motion.div className="ob-logo" initial={{ scale: 0.6, rotate: -8 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 260, damping: 12 }}>
-                  <Paw size={26} /> Peti
-                </motion.div>
-                <Mascot coat="golden" pattern="patch" mood="happy" size={210} interactive label="ליטוף" />
-              </div>
               <h1 className="ob-title">היומן המונפש של הכלב שלכם</h1>
               <p className="ob-sub">טיולים, ארוחות, גדילה, חיסונים וטריקים. כל יום מסמנים, צוברים נקודות, והכלב שלכם שמח איתכם על המסך.</p>
               <div className="ob-actions">
@@ -118,9 +127,6 @@ export default function Onboarding({ mode, onDone }: { mode: "first" | "add"; on
 
           {step === 1 && (
             <>
-              <div className="ob-preview">
-                <Mascot coat={coat} pattern={pattern} mood={nameOk ? "happy" : "calm"} size={150} />
-              </div>
               <h1 className="ob-title">איך קוראים לכלב?</h1>
               <label className="field">
                 <span>שם</span>
@@ -149,9 +155,6 @@ export default function Onboarding({ mode, onDone }: { mode: "first" | "add"; on
 
           {step === 2 && (
             <>
-              <div className="ob-preview">
-                <Mascot coat={coat} pattern={pattern} mood="happy" size={170} interactive label="ליטוף" />
-              </div>
               <h1 className="ob-title">איך {shown} {g("נראה", "נראית")}?</h1>
               <div className="field">
                 <span>צבע הפרווה</span>
@@ -233,9 +236,6 @@ export default function Onboarding({ mode, onDone }: { mode: "first" | "add"; on
 
           {step === 4 && (
             <>
-              <div className="ob-preview">
-                <Mascot coat={coat} pattern={pattern} mood="ecstatic" size={210} interactive label="ליטוף" />
-              </div>
               <h1 className="ob-title">נעים להכיר, {name.trim()}!</h1>
               <p className="ob-sub">
                 {g("הוא", "היא")} כבר {g("מחכה", "מחכה")} לכם בבית. סמנו משימות, רשמו טיולים וצברו נקודות. ואפשר ללטף {g("אותו", "אותה")} על המסך בכל רגע.

@@ -1,12 +1,42 @@
 import { motion } from "framer-motion";
 import { useEffect, useId, useState, type ReactNode } from "react";
-import type { Dog } from "../lib/types";
+import type { CoatId, Dog, Pattern } from "../lib/types";
+import { dogSnapshot, peekDogSnapshot } from "../three/DogScene";
 import { MascotFace } from "./Mascot";
 
+/** תמונה של הכלב התלת־ממדי (מרונדרת פעם אחת ונשמרת בזיכרון) */
+export function useDogImage(coat: CoatId, pattern: Pattern, framing: "face" | "full", size: number) {
+  const [src, setSrc] = useState<string | null>(() => peekDogSnapshot({ coat, pattern }, framing, size));
+  useEffect(() => {
+    const hit = peekDogSnapshot({ coat, pattern }, framing, size);
+    if (hit) {
+      setSrc(hit);
+      return;
+    }
+    let alive = true;
+    const t = setTimeout(() => {
+      const url = dogSnapshot({ coat, pattern }, framing, size);
+      if (alive) setSrc(url);
+    }, 30);
+    return () => {
+      alive = false;
+      clearTimeout(t);
+    };
+  }, [coat, pattern, framing, size]);
+  return src;
+}
+
 export function DogAvatar({ dog, size = 40 }: { dog: Dog; size?: number }) {
+  const snap = useDogImage(dog.coat, dog.pattern, "face", 192);
   return (
     <span className="avatar" style={{ width: size, height: size }}>
-      {dog.avatar ? <img src={dog.avatar} alt="" width={size} height={size} /> : <MascotFace coat={dog.coat} pattern={dog.pattern} size={size * 0.92} />}
+      {dog.avatar ? (
+        <img src={dog.avatar} alt="" width={size} height={size} />
+      ) : snap ? (
+        <img className="snap" src={snap} alt="" width={size} height={size} />
+      ) : (
+        <MascotFace coat={dog.coat} pattern={dog.pattern} size={size * 0.92} />
+      )}
     </span>
   );
 }

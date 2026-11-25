@@ -2,7 +2,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useRef, useState } from "react";
 import { Icon, Paw } from "../components/Icons";
 import Sheet from "../components/Sheet";
-import TopBar from "../components/TopBar";
 import { ConfirmButton, Empty, SectionHead } from "../components/ui";
 import WeightChart, { kgFmt } from "../components/WeightChart";
 import { ageText, daysBetween, diffYMD, fmtDay, fmtLong, today } from "../lib/dates";
@@ -159,8 +158,7 @@ export default function Growth() {
   };
 
   return (
-    <div className="screen growth">
-      <TopBar title="גדילה" />
+    <div className="page growth">
 
       <section className="card age-card">
         {dog.birth ? (

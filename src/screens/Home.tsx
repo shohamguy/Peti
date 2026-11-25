@@ -1,21 +1,21 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Tab } from "../components/BottomNav";
+import Dog3D, { type Phase } from "../components/Dog3D";
 import { Icon } from "../components/Icons";
 import { InstallBanner } from "../components/Install";
-import Mascot from "../components/Mascot";
-import TopBar from "../components/TopBar";
+import ProgressRing from "../components/ProgressRing";
 import { ConfirmButton, SectionHead } from "../components/ui";
 import { kgFmt } from "../components/WeightChart";
-import { dayKey, daysBetween, fmtTime, nextAnniversary, relDay } from "../lib/dates";
+import { dayKey, daysBetween, fmtTime, nDays, nextAnniversary, relDay } from "../lib/dates";
 import { LOG_TYPES, gFor } from "../lib/data";
 import { fx } from "../lib/fx";
-import { ACHIEVEMENTS, activeDays, computeMood, doneKey, happiness, moodLabel, moodLines, streak } from "../lib/gamify";
+import { ACHIEVEMENTS, activeDays, computeMood, doneKey, happiness, levelInfo, moodLabel, moodLines, streak } from "../lib/gamify";
 import { logsForDay, useActiveDog, useApp } from "../lib/store";
 import type { LogType } from "../lib/types";
 import { useNow, useUI } from "../lib/ui";
 
-function phaseOf(h: number) {
+function phaseOf(h: number): Phase {
   if (h >= 6 && h < 11) return "morning";
   if (h >= 11 && h < 17) return "day";
   if (h >= 17 && h < 20) return "evening";
@@ -23,6 +23,7 @@ function phaseOf(h: number) {
 }
 
 const QUICK: LogType[] = ["meal", "walk", "pee", "poop"];
+const years = (n: number) => (n === 1 ? "שנה" : n === 2 ? "שנתיים" : `${n} שנים`);
 
 export function quickLog(type: LogType) {
   const { log, deleteLog } = useApp.getState();
@@ -73,10 +74,10 @@ export default function Home({ go }: { go: (t: Tab) => void }) {
   const lastW = myWeights[myWeights.length - 1];
   const myTricks = tricks.filter((t) => t.dogId === dog.id);
   const mastered = myTricks.filter((t) => t.level === 3).length;
+  const lvl = levelInfo(dog.xp);
   const upcoming = health
-    .filter((h) => h.dogId === dog.id && h.due)
+    .filter((h) => h.dogId === dog.id && h.due && daysBetween(day, h.due) <= 30)
     .sort((a, b) => (a.due ?? "").localeCompare(b.due ?? ""))
-    .filter((h) => daysBetween(day, h.due!) <= 30)
     .slice(0, 3);
   const badges = ACHIEVEMENTS.filter((a) => dog.unlocked[a.id]).sort((a, b) => dog.unlocked[b.id].localeCompare(dog.unlocked[a.id]));
   const nextBadge = ACHIEVEMENTS.find((a) => !dog.unlocked[a.id]);
@@ -85,31 +86,31 @@ export default function Home({ go }: { go: (t: Tab) => void }) {
     dog.birth ? { kind: "birth" as const, ...nextAnniversary(dog.birth, day) } : null,
     dog.gotcha ? { kind: "gotcha" as const, ...nextAnniversary(dog.gotcha, day) } : null,
   ].filter((a): a is NonNullable<typeof a> => !!a && a.years > 0 && a.inDays <= 30);
+  const partyToday = anniversaries.some((a) => a.inDays === 0);
 
   const celebrated = useRef(false);
   useEffect(() => {
-    if (!celebrated.current && anniversaries.some((a) => a.inDays === 0)) {
+    if (!celebrated.current && partyToday) {
       celebrated.current = true;
-      setTimeout(() => fx.emit({ type: "confetti", big: true }), 600);
+      setTimeout(() => fx.emit({ type: "confetti", big: true }), 700);
     }
-  }, [anniversaries]);
+  }, [partyToday]);
 
   const pet = () => {
-    const opts = ["הב הב! 🐾", "עוד ליטוף!", `אני ${g("אוהב", "אוהבת")} אתכם!`, "כיף לי איתכם!", `גררר... סתם, אני ${g("מתלהב", "מתלהבת")} 😄`];
+    const opts = ["הב הב! 🐾", "עוד ליטוף!", `אני ${g("אוהב", "אוהבת")} אתכם!`, "כיף לי איתכם!", `ממממ, ${g("מפנק", "מפנקת")} אותי 😊`];
     setPetLine(opts[Math.floor(Math.random() * opts.length)]);
     clearTimeout(petTimer.current);
-    petTimer.current = setTimeout(() => setPetLine(null), 1800);
+    petTimer.current = setTimeout(() => setPetLine(null), 2000);
   };
 
   return (
-    <div className="screen home">
-      <TopBar />
+    <div className="page home">
       <InstallBanner />
 
       {dog.demo && (
         <div className="demo-banner">
           <span>
-            {dog.name} {g("הוא כלב", "היא כלבה")} לדוגמה. כל הנתונים כאן להתנסות בלבד.
+            {dog.name} {g("הוא כלב", "היא כלבה")} לדוגמה. אפשר לנסות הכל ולמחוק אחר כך.
           </span>
           <div className="demo-actions">
             <button type="button" className="btn btn-primary small" onClick={startOnboarding}>
@@ -120,105 +121,95 @@ export default function Home({ go }: { go: (t: Tab) => void }) {
         </div>
       )}
 
-      <section className={`scene scene-${phase}`} aria-label={`${dog.name} ${moodLabel(mood, g)}`}>
-        <div className="scene-sky" aria-hidden="true">
-          {phase === "night" ? (
-            <>
-              <span className="moon" />
-              {Array.from({ length: 14 }, (_, i) => (
-                <span key={i} className="star" style={{ insetInlineStart: `${(i * 37) % 96}%`, top: `${(i * 23) % 52}%`, animationDelay: `${(i % 5) * 0.6}s` }} />
-              ))}
-            </>
-          ) : (
-            <span className="sun" />
-          )}
-          <span className="cloud c1" />
-          <span className="cloud c2" />
+      <section className={`home-stage phase-${phase}`} aria-label={`${dog.name}: ${moodLabel(mood, g)}`}>
+        <div className="room" aria-hidden="true">
+          <div className="stars">
+            {Array.from({ length: 9 }, (_, i) => (
+              <span key={i} style={{ left: `${(i * 37) % 92}%`, top: `${(i * 29) % 88}%`, animationDelay: `${(i % 4) * 0.6}s` }} />
+            ))}
+          </div>
+          <div className="room-lamp" />
+          <div className="room-plant" />
         </div>
-        <div className="scene-hill" aria-hidden="true" />
-        <div className="scene-ball" aria-hidden="true" />
-        <div className="scene-dog">
-          <Mascot coat={dog.coat} pattern={dog.pattern} mood={mood} size={168} interactive label={`ללטף את ${dog.name}`} onPet={pet} />
+        <div className="stage-dog">
+          <Dog3D coat={dog.coat} pattern={dog.pattern} mood={mood} phase={phase} interactive onPet={pet} label={`ללטף את ${dog.name}`} />
         </div>
+
+        <div className="stage-chips">
+          <button type="button" className="stage-chip" onClick={() => go("journal")} aria-label={`${st} ימים ברצף`}>
+            <motion.span animate={st ? { scale: [1, 1.2, 1] } : {}} transition={{ repeat: Infinity, duration: 1.6 }} aria-hidden="true">
+              🔥
+            </motion.span>
+            {st}
+          </button>
+          <button type="button" className="stage-chip" onClick={() => go("growth")} aria-label={lastW ? `משקל ${kgFmt(lastW.kg)} ק״ג` : "עוד לא נשקל"}>
+            <span aria-hidden="true">⚖️</span>
+            {lastW ? `${kgFmt(lastW.kg)} ק״ג` : "—"}
+          </button>
+          <button type="button" className="stage-chip" onClick={() => go("tricks")} aria-label={`${mastered} טריקים`}>
+            <span aria-hidden="true">⭐</span>
+            {mastered}/{myTricks.length}
+          </button>
+        </div>
+
         <AnimatePresence mode="wait">
           <motion.div
             key={line}
             className="bubble"
-            initial={{ opacity: 0, scale: 0.6, y: 12 }}
+            initial={{ opacity: 0, scale: 0.7, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.85 }}
-            transition={{ type: "spring", stiffness: 420, damping: 22 }}
+            transition={{ type: "spring", stiffness: 420, damping: 24 }}
           >
             {line}
           </motion.div>
         </AnimatePresence>
+
+        <div className="mood-pill">
+          <strong>{moodLabel(mood, g)}</strong>
+          <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={happy} aria-label="מד שמחה">
+            <motion.div className="meter-fill" initial={{ width: 0 }} animate={{ width: `${happy}%` }} transition={{ type: "spring", stiffness: 60, damping: 14 }} />
+          </div>
+          <span className="num">{happy}%</span>
+        </div>
       </section>
 
-      <div className="mood-row">
-        <span className="mood-label">
-          מצב רוח: <strong>{moodLabel(mood, g)}</strong>
-        </span>
-        <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={happy} aria-label="מד שמחה">
-          <motion.div className="meter-fill" initial={{ width: 0 }} animate={{ width: `${happy}%` }} transition={{ type: "spring", stiffness: 60, damping: 14 }} />
+      <section className="card today">
+        <div className="today-head">
+          <ProgressRing value={total ? doneCount / total : 0} size={46} stroke={5} label={`${doneCount} מתוך ${total}`}>
+            <span className="level-num">{doneCount}</span>
+          </ProgressRing>
+          <div className="today-text">
+            <h2>המשימות של היום</h2>
+            <span className="muted small">
+              {total === 0 ? "אין משימות קבועות" : doneCount === total ? "הכל בוצע. יום מושלם!" : `נשארו ${total - doneCount} מתוך ${total}`}
+            </span>
+          </div>
         </div>
-      </div>
-
-      <div className="stats">
-        <button type="button" className="stat" onClick={() => go("journal")}>
-          <span className="stat-value">
-            <motion.span className="flame" animate={st ? { scale: [1, 1.18, 1] } : {}} transition={{ repeat: Infinity, duration: 1.6 }}>
-              🔥
-            </motion.span>
-            {st}
-          </span>
-          <span className="stat-label">{st === 1 ? "יום ברצף" : "ימים ברצף"}</span>
-        </button>
-        <button type="button" className="stat" onClick={() => go("growth")}>
-          <span className="stat-value">{lastW ? kgFmt(lastW.kg) : "—"}</span>
-          <span className="stat-label">{lastW ? "ק״ג במשקל אחרון" : "עוד לא נשקל"}</span>
-        </button>
-        <button type="button" className="stat" onClick={() => go("tricks")}>
-          <span className="stat-value">
-            {mastered}/{myTricks.length}
-          </span>
-          <span className="stat-label">טריקים</span>
-        </button>
-      </div>
-
-      <section className="card tasks">
-        <div className="card-head">
-          <h2>המשימות של היום</h2>
-          <span className={doneCount === total && total ? "count-pill full" : "count-pill"}>
-            {doneCount}/{total}
-          </span>
-        </div>
-        <ul className="task-list">
+        <ul className="task-grid">
           {dog.routine.map((t) => {
             const isDone = t.id in done;
             const entry = isDone && done[t.id] ? logs.find((l) => l.id === done[t.id]) : undefined;
             return (
               <li key={t.id}>
-                <button type="button" className={isDone ? "task done" : "task"} aria-pressed={isDone} onClick={() => toggleTask(t.id)}>
-                  <span className="task-check">
-                    <AnimatePresence>
-                      {isDone && (
-                        <motion.svg viewBox="0 0 24 24" width="20" height="20" initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.4, opacity: 0 }}>
-                          <motion.path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.3 }} />
-                        </motion.svg>
-                      )}
-                    </AnimatePresence>
-                  </span>
+                <motion.button type="button" className={isDone ? "task-tile done" : "task-tile"} aria-pressed={isDone} onClick={() => toggleTask(t.id)} whileTap={{ scale: 0.93 }}>
+                  <AnimatePresence>
+                    {isDone && (
+                      <motion.span className="task-check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ type: "spring", stiffness: 500, damping: 20 }}>
+                        <Icon name="check" size={13} strokeWidth={3.2} />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                   <span className="task-emoji" aria-hidden="true">
                     {t.emoji}
                   </span>
                   <span className="task-title">{t.title}</span>
                   {entry && <span className="task-time">{fmtTime(entry.at)}</span>}
-                </button>
+                </motion.button>
               </li>
             );
           })}
         </ul>
-        {!total && <p className="muted small">אין משימות קבועות. אפשר להוסיף בהגדרות הכלב.</p>}
       </section>
 
       <section className="quick">
@@ -248,8 +239,8 @@ export default function Home({ go }: { go: (t: Tab) => void }) {
             <strong>
               {a.inDays === 0
                 ? a.kind === "birth"
-                  ? `מזל טוב! ${dog.name} ${g("חוגג", "חוגגת")} היום ${a.years === 1 ? "שנה" : a.years === 2 ? "שנתיים" : `${a.years} שנים`}!`
-                  : `היום ${a.years === 1 ? "שנה" : a.years === 2 ? "שנתיים" : `${a.years} שנים`} ש${dog.name} איתכם!`
+                  ? `מזל טוב! ${dog.name} ${g("חוגג", "חוגגת")} היום ${years(a.years)}!`
+                  : `היום ${years(a.years)} ש${dog.name} איתכם!`
                 : a.kind === "birth"
                   ? `יום הולדת ${a.years} ${relDay(a.day, day)}`
                   : `יום אימוץ ${relDay(a.day, day)}`}
@@ -274,7 +265,7 @@ export default function Home({ go }: { go: (t: Tab) => void }) {
                 <li key={h.id}>
                   <button type="button" className="mini-row" onClick={() => go("health")}>
                     <span className="mini-title">{h.title}</span>
-                    <span className={n < 0 ? "pill bad" : n <= 3 ? "pill warn" : "pill"}>{n < 0 ? `באיחור של ${-n === 1 ? "יום" : `${-n} ימים`}` : relDay(h.due!, day)}</span>
+                    <span className={n < 0 ? "pill bad" : n <= 3 ? "pill warn" : "pill"}>{n < 0 ? `באיחור של ${nDays(-n)}` : relDay(h.due!, day)}</span>
                   </button>
                 </li>
               );
@@ -285,14 +276,16 @@ export default function Home({ go }: { go: (t: Tab) => void }) {
 
       <section className="card">
         <div className="card-head">
-          <h2>הישגים</h2>
+          <h2>
+            רמה {lvl.level}: {lvl.title}
+          </h2>
           <button type="button" className="link-btn" onClick={() => openSheet("badges")}>
             {badges.length}/{ACHIEVEMENTS.length}
           </button>
         </div>
-        {badges.length ? (
+        {badges.length > 0 && (
           <div className="badge-row">
-            {badges.slice(0, 5).map((a, i) => (
+            {badges.slice(0, 6).map((a, i) => (
               <motion.button
                 key={a.id}
                 type="button"
@@ -308,10 +301,10 @@ export default function Home({ go }: { go: (t: Tab) => void }) {
               </motion.button>
             ))}
           </div>
-        ) : null}
+        )}
         {nextBadge && (
           <p className="muted small next-badge">
-            <Icon name="tricks" size={16} /> ההישג הבא: <strong>{nextBadge.title(g)}</strong>
+            ההישג הבא: <strong>{nextBadge.title(g)}</strong>
             <span aria-hidden="true">·</span> {nextBadge.desc}
           </p>
         )}

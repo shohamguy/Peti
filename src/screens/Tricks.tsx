@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Icon } from "../components/Icons";
 import ProgressRing from "../components/ProgressRing";
 import Sheet from "../components/Sheet";
-import TopBar from "../components/TopBar";
 import { ConfirmButton, Segmented } from "../components/ui";
 import { fmtDay } from "../lib/dates";
 import { gFor } from "../lib/data";
@@ -29,8 +28,7 @@ export default function Tricks() {
   const open = tricks.find((t) => t.id === openId);
 
   return (
-    <div className="screen tricks">
-      <TopBar title="טריקים" />
+    <div className="page tricks">
 
       <section className="card tricks-head">
         <ProgressRing value={tricks.length ? mastered / tricks.length : 0} size={84} stroke={9} label={`${mastered} מתוך ${tricks.length}`}>

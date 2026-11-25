@@ -2,7 +2,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { Icon } from "../components/Icons";
 import Sheet from "../components/Sheet";
-import TopBar from "../components/TopBar";
 import { ConfirmButton, Empty, SectionHead } from "../components/ui";
 import { dayHeader, dayKey, fmtTime, timeValue, today } from "../lib/dates";
 import { LOG_TYPES, QUICK_TYPES } from "../lib/data";
@@ -59,8 +58,7 @@ export default function Journal() {
   };
 
   return (
-    <div className="screen journal">
-      <TopBar title="יומן" />
+    <div className="page journal">
 
       <div className="today-sum" aria-label="סיכום היום">
         <span className="sum-chip">
