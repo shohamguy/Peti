@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../components/Icons";
 import { InstallCard } from "../components/Install";
-import Mascot from "../components/Mascot";
+import { DOG_FACE } from "../components/DogVideo";
 import Sheet from "../components/Sheet";
-import { ConfirmButton, DogAvatar, Segmented, useDogImage } from "../components/ui";
+import { ConfirmButton, DogAvatar, Segmented } from "../components/ui";
 import { today } from "../lib/dates";
-import { BREEDS, COATS, COAT_IDS, LOG_TYPES, PATTERNS, QUICK_TYPES, SIZES, SIZE_IDS, gFor } from "../lib/data";
+import { BREEDS, LOG_TYPES, QUICK_TYPES, SIZES, SIZE_IDS, gFor } from "../lib/data";
 import { fx } from "../lib/fx";
 import { imageToDataUrl } from "../lib/image";
 import { IS_ARTIFACT, loadPhoto, savePhoto } from "../lib/persist";
@@ -13,15 +13,13 @@ import { pickData, uid, useActiveDog, useApp } from "../lib/store";
 import type { Data, Dog, LogType, Theme } from "../lib/types";
 import { useUI } from "../lib/ui";
 
-type Form = Pick<Dog, "name" | "sex" | "breed" | "size" | "coat" | "pattern"> & { birth: string; gotcha: string; avatar?: string };
+type Form = Pick<Dog, "name" | "sex" | "breed" | "size"> & { birth: string; gotcha: string; avatar?: string };
 
 const toForm = (d: Dog): Form => ({
   name: d.name,
   sex: d.sex,
   breed: d.breed,
   size: d.size,
-  coat: d.coat,
-  pattern: d.pattern,
   birth: d.birth ?? "",
   gotcha: d.gotcha ?? "",
   avatar: d.avatar,
@@ -41,7 +39,6 @@ export default function DogSheet({ open, onClose }: { open: boolean; onClose: ()
   const [taskEmoji, setTaskEmoji] = useState(TASK_EMOJIS[0]);
   const [taskType, setTaskType] = useState<LogType | "">("");
   const avatarRef = useRef<HTMLInputElement>(null);
-  const preview = useDogImage(form?.coat ?? "golden", form?.pattern ?? "plain", "full", 360);
 
   useEffect(() => {
     if (open && dog) setForm(toForm(dog));
@@ -59,8 +56,6 @@ export default function DogSheet({ open, onClose }: { open: boolean; onClose: ()
       sex: form.sex,
       breed: form.breed.trim() || "מעורב",
       size: form.size,
-      coat: form.coat,
-      pattern: form.pattern,
       birth: form.birth || undefined,
       gotcha: form.gotcha || undefined,
       avatar: form.avatar,
@@ -142,13 +137,7 @@ export default function DogSheet({ open, onClose }: { open: boolean; onClose: ()
 
         <section className="profile">
           <div className="profile-preview">
-            {form.avatar ? (
-              <img className="avatar-big" src={form.avatar} alt={`התמונה של ${form.name}`} />
-            ) : preview ? (
-              <img className="dog-preview" src={preview} alt={`${form.name} בציור`} />
-            ) : (
-              <Mascot coat={form.coat} pattern={form.pattern} mood="happy" size={120} />
-            )}
+            <img className="avatar-big" src={form.avatar ?? DOG_FACE} alt={form.avatar ? `התמונה של ${form.name}` : "Peti"} />
             <div className="profile-photo-btns">
               <label className="btn btn-ghost small">
                 <Icon name="camera" size={18} /> {form.avatar ? "החלפת תמונה" : "תמונת פרופיל"}
@@ -156,7 +145,7 @@ export default function DogSheet({ open, onClose }: { open: boolean; onClose: ()
               </label>
               {form.avatar && (
                 <button type="button" className="btn btn-ghost small" onClick={() => setForm({ ...form, avatar: undefined })}>
-                  חזרה לציור
+                  חזרה ל-Peti
                 </button>
               )}
             </div>
@@ -200,27 +189,6 @@ export default function DogSheet({ open, onClose }: { open: boolean; onClose: ()
               <span>יום האימוץ</span>
               <input id="d-gotcha" type="date" value={form.gotcha} max={today()} onChange={(e) => setForm({ ...form, gotcha: e.target.value })} />
             </label>
-          </div>
-          <div className="field">
-            <span>צבע הפרווה בציור</span>
-            <div className="swatches" role="radiogroup" aria-label="צבע הפרווה">
-              {COAT_IDS.map((id) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="radio"
-                  aria-checked={form.coat === id}
-                  aria-label={COATS[id].name}
-                  className={form.coat === id ? "swatch on" : "swatch"}
-                  style={{ background: `linear-gradient(135deg, ${COATS[id].base} 55%, ${COATS[id].dark} 55%)` }}
-                  onClick={() => setForm({ ...form, coat: id })}
-                />
-              ))}
-            </div>
-          </div>
-          <div className="field">
-            <span>דוגמה</span>
-            <Segmented label="דוגמה" value={form.pattern} onChange={(pattern) => setForm({ ...form, pattern })} options={PATTERNS.map((p) => ({ value: p.id, label: p.name }))} />
           </div>
           <button type="button" className="btn btn-primary block" disabled={!dirty || !form.name.trim()} onClick={saveProfile}>
             {dirty ? "שמירת הפרופיל" : "הפרופיל שמור"}

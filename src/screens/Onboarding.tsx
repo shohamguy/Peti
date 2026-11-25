@@ -1,16 +1,16 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import Dog3D from "../components/Dog3D";
+import DogVideo from "../components/DogVideo";
 import { Paw } from "../components/Icons";
 import { Segmented } from "../components/ui";
 import { addDays, today } from "../lib/dates";
-import { BREEDS, COATS, COAT_IDS, PATTERNS, SIZES, SIZE_IDS, gFor } from "../lib/data";
+import { BREEDS, SIZES, SIZE_IDS, gFor } from "../lib/data";
 import { fx } from "../lib/fx";
 import { useApp } from "../lib/store";
 import { useUI } from "../lib/ui";
-import type { CoatId, Pattern, Sex, Size } from "../lib/types";
+import type { Sex, Size } from "../lib/types";
 
-const STEPS = 4; // שם, מראה, פרטים, סיום
+// שלבים: 0 פתיחה, 1 שם, 2 פרטים, 3 סיום
 
 export default function Onboarding({ mode, onDone }: { mode: "first" | "add"; onDone: () => void }) {
   const addDog = useApp((s) => s.addDog);
@@ -19,8 +19,6 @@ export default function Onboarding({ mode, onDone }: { mode: "first" | "add"; on
   const [dir, setDir] = useState(1);
   const [name, setName] = useState("");
   const [sex, setSex] = useState<Sex>("male");
-  const [coat, setCoat] = useState<CoatId>("golden");
-  const [pattern, setPattern] = useState<Pattern>("plain");
   const [breed, setBreed] = useState("");
   const [size, setSize] = useState<Size>("medium");
   const [ageMode, setAgeMode] = useState<"date" | "approx">("date");
@@ -47,24 +45,23 @@ export default function Onboarding({ mode, onDone }: { mode: "first" | "add"; on
     // מסך החגיגה נשאר פתוח גם אחרי שהכלב נוסף
     useUI.getState().startOnboarding();
     const { dogs, removeDog } = useApp.getState();
-    addDog({ name: name.trim(), sex, coat, pattern, breed: breed.trim() || "מעורב", size, birth: b, gotcha: gotcha || undefined });
+    addDog({ name: name.trim(), sex, coat: "golden", pattern: "plain", breed: breed.trim() || "מעורב", size, birth: b, gotcha: gotcha || undefined });
     dogs.filter((d) => d.demo).forEach((d) => removeDog(d.id));
-    go(4);
+    go(3);
   };
 
   useEffect(() => {
-    if (step === 4) {
+    if (step === 3) {
       fx.emit({ type: "confetti", big: true });
       setTimeout(() => fx.emit({ type: "cheer" }), 250);
     }
   }, [step]);
 
   const nameOk = name.trim().length > 0;
-  const dogMood = step === 4 ? "ecstatic" : step === 3 ? "calm" : step === 1 && !nameOk ? "calm" : "happy";
 
   return (
     <div className="onboarding">
-      {step > 0 && step < 4 && (
+      {step > 0 && step < 3 && (
         <div className="ob-top">
           {mode === "add" || step > 1 ? (
             <button type="button" className="link-btn" onClick={() => (step === 1 ? onDone() : go(step - 1))}>
@@ -73,8 +70,8 @@ export default function Onboarding({ mode, onDone }: { mode: "first" | "add"; on
           ) : (
             <span />
           )}
-          <div className="ob-dots" aria-label={`שלב ${step} מתוך ${STEPS - 1}`}>
-            {[1, 2, 3].map((i) => (
+          <div className="ob-dots" aria-label={`שלב ${step} מתוך 2`}>
+            {[1, 2].map((i) => (
               <motion.span key={i} className="ob-dot" animate={{ width: i === step ? 26 : 9, opacity: i <= step ? 1 : 0.35 }} />
             ))}
           </div>
@@ -89,8 +86,8 @@ export default function Onboarding({ mode, onDone }: { mode: "first" | "add"; on
           </span>
         </motion.div>
       )}
-      <div className={step === 3 ? "ob-dog small" : "ob-dog"}>
-        <Dog3D coat={coat} pattern={pattern} mood={dogMood} framing="full" interactive label="ליטוף" />
+      <div className={step === 2 ? "ob-dog small" : "ob-dog"}>
+        <DogVideo interactive label="ליטוף" />
       </div>
 
       <AnimatePresence mode="wait" custom={dir} initial={false}>
@@ -155,38 +152,6 @@ export default function Onboarding({ mode, onDone }: { mode: "first" | "add"; on
 
           {step === 2 && (
             <>
-              <h1 className="ob-title">איך {shown} {g("נראה", "נראית")}?</h1>
-              <div className="field">
-                <span>צבע הפרווה</span>
-                <div className="swatches" role="radiogroup" aria-label="צבע הפרווה">
-                  {COAT_IDS.map((id) => (
-                    <button
-                      key={id}
-                      type="button"
-                      role="radio"
-                      aria-checked={coat === id}
-                      aria-label={COATS[id].name}
-                      className={coat === id ? "swatch on" : "swatch"}
-                      style={{ background: `linear-gradient(135deg, ${COATS[id].base} 55%, ${COATS[id].dark} 55%)` }}
-                      onClick={() => setCoat(id)}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="field">
-                <span>דוגמה</span>
-                <Segmented label="דוגמה" value={pattern} onChange={setPattern} options={PATTERNS.map((p) => ({ value: p.id, label: p.name }))} />
-              </div>
-              <div className="ob-actions">
-                <button type="button" className="btn btn-primary block big" onClick={() => go(3)}>
-                  הבא
-                </button>
-              </div>
-            </>
-          )}
-
-          {step === 3 && (
-            <>
               <h1 className="ob-title">עוד כמה פרטים על {shown}</h1>
               <label className="field">
                 <span>גזע</span>
@@ -234,11 +199,11 @@ export default function Onboarding({ mode, onDone }: { mode: "first" | "add"; on
             </>
           )}
 
-          {step === 4 && (
+          {step === 3 && (
             <>
               <h1 className="ob-title">נעים להכיר, {name.trim()}!</h1>
               <p className="ob-sub">
-                {g("הוא", "היא")} כבר {g("מחכה", "מחכה")} לכם בבית. סמנו משימות, רשמו טיולים וצברו נקודות. ואפשר ללטף {g("אותו", "אותה")} על המסך בכל רגע.
+                {g("הוא", "היא")} כבר מחכה לכם בבית. סמנו משימות, רשמו טיולים וצברו נקודות. ואפשר ללטף {g("אותו", "אותה")} על המסך בכל רגע.
               </p>
               <div className="ob-actions">
                 <button type="button" className="btn btn-primary block big" onClick={onDone}>

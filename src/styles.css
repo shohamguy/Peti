@@ -1,5 +1,5 @@
 /* Layout: a native-style app shell. Fixed header and tab bar, content scrolls between them.
-   Home opens on a cozy lit "room" where the 3D puppy lives; everything else sits on soft cards.
+   Home opens on Peti, the animated puppy (looping video), with its speech bubble; everything else sits on soft cards.
    All sizes are in rem, and the root size follows the phone's width, so the proportions hold on every phone. */
 :root {
   --bg: #f6efe7; /* warm linen */
@@ -431,10 +431,6 @@ p {
   height: 100%;
   object-fit: cover;
 }
-.avatar img.snap {
-  object-fit: contain;
-  transform: scale(1.18) translateY(4%);
-}
 
 /* ---------- טבעת התקדמות ---------- */
 .ring {
@@ -460,34 +456,63 @@ p {
   color: var(--ink-2);
 }
 
-/* ---------- הכלב התלת־ממדי ---------- */
-.dog3d {
-  position: relative;
+/* ---------- הכלב בווידאו ---------- */
+.dog-video {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.dog-video-inner {
   width: 100%;
   height: 100%;
-  min-height: 0;
+  transform-origin: 50% 85%;
 }
-.dog3d canvas {
+.dog-video video {
   display: block;
   width: 100%;
   height: 100%;
+  object-fit: cover;
+  object-position: 50% 35%;
 }
-.dog3d.interactive {
+.dog-video.interactive {
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
-.dog3d.interactive:focus-visible {
+.dog-video.interactive:focus-visible {
   outline-offset: -6px;
-  border-radius: var(--radius);
+  border-radius: inherit;
 }
-.dog3d.fallback {
-  display: grid;
-  place-items: end center;
+.dog-tint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tint-evening {
+  background: linear-gradient(180deg, rgba(255, 150, 70, 0.16), rgba(255, 190, 120, 0.06));
+  mix-blend-mode: multiply;
+}
+.tint-night {
+  background: linear-gradient(180deg, rgba(40, 48, 120, 0.34), rgba(40, 48, 120, 0.12) 70%, transparent);
+  mix-blend-mode: multiply;
+}
+.stars {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 40%;
+  pointer-events: none;
+}
+.stars span {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #fff;
+  animation: twinkle 2.6s ease-in-out infinite;
 }
 .heart {
   position: absolute;
-  top: 30%;
+  top: 34%;
   z-index: 2;
   font-size: 1.5rem;
   pointer-events: none;
@@ -495,14 +520,14 @@ p {
 }
 .zzz {
   position: absolute;
-  top: 14%;
-  left: 60%;
+  top: 12%;
+  left: 62%;
   display: flex;
   gap: 0.2rem;
   pointer-events: none;
   color: #fff;
-  font: 700 1.1rem var(--font-display);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  font: 700 1.2rem var(--font-display);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
 }
 .zzz i {
   font-style: normal;
@@ -518,197 +543,96 @@ p {
   font-size: 1.25em;
 }
 
-/* ---------- הבית: חדר חמים עם הכלב ---------- */
+/* ---------- הבית: הבמה של Peti ---------- */
 .home-stage {
   position: relative;
-  height: clamp(15rem, 46dvh, 29rem);
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 52dvh;
   border-radius: 1.75rem;
   overflow: hidden;
   isolation: isolate;
+  background: #9fbf78;
   box-shadow: var(--shadow-2);
-  --wall-a: #f4e7d7;
-  --wall-b: #ead6c0;
-  --floor-a: #d9b893;
-  --floor-b: #c9a27a;
-  --glow: rgba(255, 246, 225, 0.95);
 }
-.home-stage.phase-day {
-  --wall-a: #f6ecdf;
-  --wall-b: #eddcc7;
-}
-.home-stage.phase-evening {
-  --wall-a: #f3d6b8;
-  --wall-b: #e7bf98;
-  --floor-a: #cf9f72;
-  --floor-b: #b98557;
-  --glow: rgba(255, 200, 130, 0.9);
-}
-.home-stage.phase-night {
-  --wall-a: #2c3150;
-  --wall-b: #232844;
-  --floor-a: #3a3240;
-  --floor-b: #2c2633;
-  --glow: rgba(150, 170, 255, 0.35);
-}
-.room {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(180deg, var(--wall-a), var(--wall-b) 66%, var(--floor-a) 66%, var(--floor-b));
-}
-.room::before {
-  /* חלון עם אור רך */
-  content: "";
-  position: absolute;
-  top: 6%;
-  left: 6%;
-  width: 34%;
-  height: 48%;
-  border-radius: 0.6rem;
-  background: radial-gradient(ellipse at 50% 40%, var(--glow), transparent 75%);
-  filter: blur(6px);
-}
-.room::after {
-  /* ספה מטושטשת */
-  content: "";
-  position: absolute;
-  left: -8%;
-  bottom: 30%;
-  width: 46%;
-  height: 22%;
-  border-radius: 2rem 2rem 0.8rem 0.8rem;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(225, 205, 185, 0.5));
-  filter: blur(9px);
-  opacity: 0.85;
-}
-.room-plant {
-  position: absolute;
-  right: 5%;
-  bottom: 31%;
-  width: 18%;
-  height: 34%;
-  border-radius: 50% 50% 40% 40%;
-  background: radial-gradient(ellipse at 50% 35%, #7fb07a, #4f8a5a 70%);
-  filter: blur(7px);
-  opacity: 0.65;
-}
-.phase-night .room-plant,
-.phase-night .room::after {
-  opacity: 0.25;
-}
-.room-lamp {
-  position: absolute;
-  right: 12%;
-  top: 14%;
-  width: 34%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 190, 110, 0.55), transparent 65%);
-  filter: blur(4px);
-  opacity: 0;
-}
-.phase-night .room-lamp,
-.phase-evening .room-lamp {
-  opacity: 1;
-}
-.stars {
-  position: absolute;
-  top: 8%;
-  left: 7%;
-  width: 32%;
-  height: 40%;
-  opacity: 0;
-}
-.phase-night .stars {
-  opacity: 1;
-}
-.stars span {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: #fff;
-  animation: twinkle 2.6s ease-in-out infinite;
-}
-.stage-dog {
-  position: absolute;
-  inset: 0;
-}
-.bubble {
-  position: absolute;
-  top: 0.85rem;
-  right: 0.85rem;
-  z-index: 3;
-  max-width: 52%;
-  padding: 0.5rem 0.8rem;
-  border-radius: 1.1rem 1.1rem 0.35rem 1.1rem;
-  background: rgba(255, 255, 255, 0.92);
-  color: #2b211b;
-  box-shadow: 0 6px 18px rgba(74, 46, 20, 0.16);
-  font: 600 0.95rem/1.3 var(--font-display);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  pointer-events: none;
-}
-.stage-chips {
-  position: absolute;
-  top: 0.85rem;
-  left: 0.85rem;
-  z-index: 3;
+.speech {
+  position: relative;
+  z-index: 2;
   display: grid;
-  gap: 0.4rem;
-  justify-items: start;
+  gap: 0.45rem;
+  margin-top: -2.1rem;
+  margin-inline: 0.75rem;
+  padding: 0.75rem 0.9rem 0.7rem;
+  border-radius: 1.2rem;
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
 }
-.stage-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.25rem 0.6rem;
-  border: 0;
-  border-radius: 99px;
-  background: rgba(255, 255, 255, 0.8);
-  color: #2b211b;
-  box-shadow: 0 2px 8px rgba(74, 46, 20, 0.12);
-  font: 600 0.82rem var(--font-display);
-  font-variant-numeric: tabular-nums;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  cursor: pointer;
-}
-.mood-pill {
+.speech::before {
+  content: "";
   position: absolute;
-  left: 0.85rem;
-  right: 0.85rem;
-  bottom: 0.75rem;
-  z-index: 3;
+  top: -0.45rem;
+  right: 50%;
+  width: 1rem;
+  height: 1rem;
+  margin-right: -0.5rem;
+  background: var(--surface);
+  transform: rotate(45deg);
+  border-radius: 0.2rem;
+}
+.speech-line {
+  position: relative;
+  font: 600 1.02rem/1.35 var(--font-display);
+  text-align: center;
+  text-wrap: balance;
+}
+.speech-mood {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.4rem 0.7rem;
-  border-radius: 99px;
-  background: rgba(255, 255, 255, 0.78);
-  color: #2b211b;
-  box-shadow: 0 4px 14px rgba(74, 46, 20, 0.14);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  font-size: 0.85rem;
-  pointer-events: none;
+  color: var(--ink-2);
+  font-size: 0.82rem;
 }
-.mood-pill strong {
-  font: 600 0.9rem var(--font-display);
+.speech-mood strong {
+  color: var(--ink);
+  font: 600 0.88rem var(--font-display);
   white-space: nowrap;
 }
 .meter {
   flex: 1;
   height: 0.5rem;
   border-radius: 99px;
-  background: rgba(43, 33, 27, 0.1);
+  background: var(--track);
   overflow: hidden;
 }
 .meter-fill {
   height: 100%;
   border-radius: 99px;
   background: linear-gradient(to left, #ff8fa3, #ffc94a 55%, #8fd16a);
+}
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+.stat-chip {
+  display: grid;
+  justify-items: center;
+  gap: 0.05rem;
+  padding: 0.55rem 0.3rem;
+  border: 0;
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  color: var(--ink);
+  cursor: pointer;
+}
+.stat-chip strong {
+  font: 700 1.2rem/1.15 var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+.stat-chip span:last-child {
+  color: var(--ink-2);
+  font-size: 0.74rem;
 }
 
 /* ---------- משימות היום ---------- */
@@ -1318,6 +1242,7 @@ p {
   font: 700 2.3rem/1 var(--font-display);
 }
 .ob-dog {
+  position: relative;
   width: 100%;
   height: clamp(13rem, 38dvh, 22rem);
   border-radius: 1.75rem;
@@ -1357,8 +1282,12 @@ p {
 .splash .ob-actions {
   width: min(100%, 22rem);
 }
-.splash .ob-dog {
-  width: min(80vw, 20rem);
+.splash-dog {
+  width: min(70vw, 18rem);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 1.75rem;
+  box-shadow: var(--shadow-2);
 }
 .splash-logo {
   display: inline-flex;
@@ -1912,13 +1841,6 @@ p {
   justify-items: center;
   gap: 0.6rem;
 }
-.dog-preview {
-  width: 11rem;
-  height: 11rem;
-  border-radius: 50%;
-  object-fit: contain;
-  background: radial-gradient(circle at 50% 35%, #fff7e8, var(--honey-soft));
-}
 .avatar-big {
   width: 7.5rem;
   height: 7.5rem;
@@ -2125,127 +2047,7 @@ p {
   direction: ltr;
 }
 
-/* ---------- הכלב המצויר (גיבוי בלי WebGL) ---------- */
-.mascot {
-  position: relative;
-  display: inline-grid;
-  justify-items: center;
-  align-items: end;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-}
-.mascot-btn {
-  cursor: pointer;
-  border-radius: 2rem;
-}
-.mascot-body {
-  position: relative;
-  z-index: 1;
-  line-height: 0;
-}
-.mascot-shadow {
-  position: absolute;
-  bottom: 1px;
-  height: 14px;
-  border-radius: 50%;
-  background: rgba(40, 24, 10, 0.2);
-}
-.mascot-svg .m-all {
-  transform-origin: 100px 210px;
-  animation: breathe 3.2s ease-in-out infinite;
-}
-.mascot-svg .m-tail {
-  transform-origin: 134px 178px;
-  animation: wag var(--wag, 0.8s) ease-in-out infinite alternate;
-}
-.mascot-svg .m-head {
-  transform-origin: 100px 120px;
-  animation: tilt 7s ease-in-out infinite;
-}
-.mascot-svg .m-eyes {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: blink 4.8s infinite;
-}
-.mascot-svg .m-tongue {
-  transform-box: fill-box;
-  transform-origin: 50% 0;
-  animation: pant 0.42s ease-in-out infinite alternate;
-}
-.mascot-svg .m-tag {
-  transform-origin: 100px 130px;
-  animation: swing 2.2s ease-in-out infinite alternate;
-}
-.mood-sleepy .m-tail {
-  animation: none;
-  transform: rotate(20deg);
-}
-.mood-sleepy .m-head {
-  animation: none;
-  transform: translateY(5px) rotate(4deg);
-}
-.m-zzz text {
-  opacity: 0;
-  animation: zzz 3s ease-in-out infinite;
-}
-
 /* ---------- אנימציות ---------- */
-@keyframes breathe {
-  0%,
-  100% {
-    transform: scaleY(1);
-  }
-  50% {
-    transform: scaleY(1.022);
-  }
-}
-@keyframes wag {
-  from {
-    transform: rotate(-14deg);
-  }
-  to {
-    transform: rotate(24deg);
-  }
-}
-@keyframes tilt {
-  0%,
-  64%,
-  100% {
-    transform: rotate(0);
-  }
-  70%,
-  86% {
-    transform: rotate(-8deg);
-  }
-}
-@keyframes blink {
-  0%,
-  93%,
-  100% {
-    transform: scaleY(1);
-  }
-  96% {
-    transform: scaleY(0.08);
-  }
-}
-@keyframes pant {
-  from {
-    transform: scaleY(1);
-  }
-  to {
-    transform: scaleY(1.18);
-  }
-}
-@keyframes swing {
-  from {
-    transform: rotate(-9deg);
-  }
-  to {
-    transform: rotate(9deg);
-  }
-}
 @keyframes zzz {
   0% {
     opacity: 0;

@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Tab } from "../components/BottomNav";
-import Dog3D, { type Phase } from "../components/Dog3D";
+import DogVideo, { type Phase } from "../components/DogVideo";
 import { Icon } from "../components/Icons";
 import { InstallBanner } from "../components/Install";
 import ProgressRing from "../components/ProgressRing";
@@ -122,57 +122,52 @@ export default function Home({ go }: { go: (t: Tab) => void }) {
       )}
 
       <section className={`home-stage phase-${phase}`} aria-label={`${dog.name}: ${moodLabel(mood, g)}`}>
-        <div className="room" aria-hidden="true">
-          <div className="stars">
-            {Array.from({ length: 9 }, (_, i) => (
-              <span key={i} style={{ left: `${(i * 37) % 92}%`, top: `${(i * 29) % 88}%`, animationDelay: `${(i % 4) * 0.6}s` }} />
-            ))}
-          </div>
-          <div className="room-lamp" />
-          <div className="room-plant" />
-        </div>
-        <div className="stage-dog">
-          <Dog3D coat={dog.coat} pattern={dog.pattern} mood={mood} phase={phase} interactive onPet={pet} label={`ללטף את ${dog.name}`} />
-        </div>
+        <DogVideo mood={mood} phase={phase} interactive onPet={pet} label={`ללטף את ${dog.name}`} />
+      </section>
 
-        <div className="stage-chips">
-          <button type="button" className="stage-chip" onClick={() => go("journal")} aria-label={`${st} ימים ברצף`}>
-            <motion.span animate={st ? { scale: [1, 1.2, 1] } : {}} transition={{ repeat: Infinity, duration: 1.6 }} aria-hidden="true">
-              🔥
-            </motion.span>
-            {st}
-          </button>
-          <button type="button" className="stage-chip" onClick={() => go("growth")} aria-label={lastW ? `משקל ${kgFmt(lastW.kg)} ק״ג` : "עוד לא נשקל"}>
-            <span aria-hidden="true">⚖️</span>
-            {lastW ? `${kgFmt(lastW.kg)} ק״ג` : "—"}
-          </button>
-          <button type="button" className="stage-chip" onClick={() => go("tricks")} aria-label={`${mastered} טריקים`}>
-            <span aria-hidden="true">⭐</span>
-            {mastered}/{myTricks.length}
-          </button>
-        </div>
-
+      <div className="speech">
         <AnimatePresence mode="wait">
-          <motion.div
+          <motion.p
             key={line}
-            className="bubble"
-            initial={{ opacity: 0, scale: 0.7, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.85 }}
-            transition={{ type: "spring", stiffness: 420, damping: 24 }}
+            className="speech-line"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.22 }}
           >
             {line}
-          </motion.div>
+          </motion.p>
         </AnimatePresence>
-
-        <div className="mood-pill">
+        <div className="speech-mood">
           <strong>{moodLabel(mood, g)}</strong>
           <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={happy} aria-label="מד שמחה">
             <motion.div className="meter-fill" initial={{ width: 0 }} animate={{ width: `${happy}%` }} transition={{ type: "spring", stiffness: 60, damping: 14 }} />
           </div>
           <span className="num">{happy}%</span>
         </div>
-      </section>
+      </div>
+
+      <div className="stats-row">
+        <button type="button" className="stat-chip" onClick={() => go("journal")}>
+          <motion.span animate={st ? { scale: [1, 1.2, 1] } : {}} transition={{ repeat: Infinity, duration: 1.6 }} aria-hidden="true">
+            🔥
+          </motion.span>
+          <strong>{st}</strong>
+          <span>{st === 1 ? "יום ברצף" : "ימים ברצף"}</span>
+        </button>
+        <button type="button" className="stat-chip" onClick={() => go("growth")}>
+          <span aria-hidden="true">⚖️</span>
+          <strong>{lastW ? kgFmt(lastW.kg) : "—"}</strong>
+          <span>{lastW ? "ק״ג" : "לא נשקל"}</span>
+        </button>
+        <button type="button" className="stat-chip" onClick={() => go("tricks")}>
+          <span aria-hidden="true">⭐</span>
+          <strong>
+            {mastered}/{myTricks.length}
+          </strong>
+          <span>טריקים</span>
+        </button>
+      </div>
 
       <section className="card today">
         <div className="today-head">

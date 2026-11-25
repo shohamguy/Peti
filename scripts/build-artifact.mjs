@@ -25,6 +25,10 @@ const page = `<title>Peti</title>
 <script type="module" src="${js}"></script>
 `;
 writeFileSync(path.join(out, "peti.html"), page);
-writeFileSync(path.join(out, "files.json"), JSON.stringify({ [js]: path.join("dist-artifact", js) }, null, 2));
+const media = ["peti/idle.mp4", "peti/idle.jpg", "peti/face.jpg"];
+writeFileSync(
+  path.join(out, "files.json"),
+  JSON.stringify({ [js]: path.join("dist-artifact", js), ...Object.fromEntries(media.map((m) => [m, path.join("public", m)])) }, null, 2),
+);
 console.log("artifact page: dist-artifact/peti.html");
 console.log("supporting file:", js);

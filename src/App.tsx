@@ -2,7 +2,7 @@ import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import BottomNav, { TABS, type Tab } from "./components/BottomNav";
 import FxLayer from "./components/FxLayer";
-import Dog3D from "./components/Dog3D";
+import { DOG_POSTER } from "./components/DogVideo";
 import { Paw } from "./components/Icons";
 import TopBar from "./components/TopBar";
 import { boot } from "./lib/boot";
@@ -44,9 +44,7 @@ function Splash() {
 function LoadError() {
   return (
     <div className="splash">
-      <div className="ob-dog small">
-        <Dog3D coat="golden" pattern="plain" mood="bored" framing="full" />
-      </div>
+      <img className="splash-dog" src={DOG_POSTER} alt="" />
       <h1 className="ob-title">לא הצלחנו להגיע לנתונים השמורים</h1>
       <p className="ob-sub">כנראה בעיית חיבור. הנתונים שלכם לא נמחקו.</p>
       <div className="ob-actions">
